@@ -15,14 +15,4 @@ def hello_fast_api():
 @app.get("/api/py/helloFastApi3")
 def hello_fast_api2():
     return {"message": "Hello from FastAPI 3"}
-    client = ElevenLabs(api_key="sk_66480812455c0900881599664d023ac3a46fec1d51358d0f")        
-    client.conversational_ai.update_agent(
-        agent_id="hR7KugGQ4M5SrgTyTrm2",
-        conversation_config=ConversationalConfig(
-            agent=AgentConfig(
-                prompt=PromptAgent(
-                    prompt="hello 2"
-                )
-            )
-        )
-    )
+ 
