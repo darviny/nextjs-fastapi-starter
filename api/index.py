@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 
+from elevenlabs import ElevenLabs
+from elevenlabs import ConversationalConfig
+from elevenlabs import AgentConfig
+from elevenlabs import PromptAgent
+
 ### Create FastAPI instance with custom docs and openapi url
 app = FastAPI(docs_url="/api/py/docs", openapi_url="/api/py/openapi.json")
 
