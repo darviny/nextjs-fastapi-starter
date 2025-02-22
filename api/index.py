@@ -3,6 +3,7 @@ from elevenlabs import ElevenLabs
 from elevenlabs import ConversationalConfig
 from elevenlabs import AgentConfig
 from elevenlabs import PromptAgent
+from openai import OpenAI
 import os
 
 app = FastAPI(docs_url="/api/py/docs", openapi_url="/api/py/openapi.json")
