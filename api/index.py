@@ -7,6 +7,6 @@ app = FastAPI(docs_url="/api/py/docs", openapi_url="/api/py/openapi.json")
 def hello_fast_api():
     return {"message": "Hello from FastAPI"}
 
-@app.get("/api/py/helloFastApi2")
+@app.get("/api/py/helloFastApi3")
 def hello_fast_api2():
-    return {"message": "Hello from FastAPI 2"}
+    return {"message": "Hello from FastAPI 3"}
