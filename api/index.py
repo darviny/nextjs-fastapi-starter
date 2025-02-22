@@ -25,7 +25,7 @@ async def hello_fast_api3():
         
         # Make OpenAI API call
         completion = await client.chat.completions.create(
-            model="chatgpt-4o-latest",
+            model="gpt-4o",
             messages=[
                 {"role": "user", "content": "write a haiku about ai"}
             ]
