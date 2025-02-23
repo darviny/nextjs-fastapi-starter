@@ -176,7 +176,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         # Combine base prompt with transcript
-        base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, give asummary of their personality and political leaning in this format: PERSONALITY INSIGHTS (Confidence Level: High; Communication: Direct communicator who favors brevity and precision; Emotional Tone: Generally positive with an analytical mindset; Decision Style: Methodical, considers long-term implications; Engagement: Moderate participation in discussions, prefers focused exchanges over small talk; Notable Traits: Shows intellectual curiosity, values efficiency) POLITICAL ALIGNMENT (Confidence Level: Limited; Limited data available to make specific political assessments; No clear ideological stance expressed; Discussions focus on practical rather than political matters)"
+        base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, give asummary of their personality and political leaning in this format:PERSONALITY INSIGHTS\nConfidence Level: [Low/Medium/High]\n\nCore Traits:\n- Communication: [Brief/Detailed] & [Formal/Casual]\n- Decision Style: [Analytical/Intuitive]\n- Engagement: [Surface/Deep]\n\nPOLITICAL INDICATORS\nConfidence: [Low/Medium/High]\n\nPolitical Compass:\n- Economic (L/R): [-10 to +10]\n- Social (Lib/Auth): [-10 to +10]\n\nKey Views:\n- Economic Stance: [Description]\n- Social Position: [Description]"
         message_content = makePrompt(base_prompt, transcript)
         print(f"Using message content: {message_content}")
         
