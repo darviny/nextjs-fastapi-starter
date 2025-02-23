@@ -137,6 +137,11 @@ def getDataCollections(client, agent_id):
 		print(f"Error getting data collection results: {str(e)}")
 		return None
 
+def makePrompt(base_prompt: str, transcript: Optional[str] = None) -> str:
+    if not transcript:
+        return base_prompt
+    return f"Previous conversation:\n{transcript}\n\n{base_prompt}"
+
 app = FastAPI()
 
 @app.get("/api/py/helloFastApi")
@@ -165,8 +170,9 @@ async def hello_fast_api3() -> Dict[str, Any]:
         elevenlabs_manager = ElevenLabsManager(elevenlabs_api_key)
         transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
-        # Use transcript or fallback
-        message_content = transcript if transcript else "write a haiku about ai"
+        # Combine base prompt with transcript
+        base_prompt = "write a haiku about the previous conversation"
+        message_content = makePrompt(base_prompt, transcript)
         print(f"Using message content: {message_content}")
         
         client = OpenAI(api_key=openai_api_key)
