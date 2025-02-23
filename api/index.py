@@ -176,7 +176,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         # Combine base prompt with transcript
-        base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, and generate one interesting follow up related those qualities. At the beginning of each question, explain what they mentioned previously and why you are asking them this questions. And then give them a summary of their personality and political leaning with dark humor. "
+        base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, give asummary of their personality and political leaning."
         message_content = makePrompt(base_prompt, transcript)
         print(f"Using message content: {message_content}")
         
@@ -193,7 +193,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         ai_response = completion.choices[0].message.content
         
         # Update the agent's prompt
-        system_prompt = "You are a friendly and efficient interviewer. Don't be too chatty. Your role is to be asking a random question out of the following questions. Make sure you explain why you are asking it."
+        system_prompt = "You are a friendly and efficient announcer. Don't be too chatty. Your role is give the user a summary of their personality and politcal learning."
         if not elevenlabs_manager.update_prompt(
             agent_id=CO_AGENT_1,
             prompt_text=makeSystemPrompt(system_prompt, ai_response)
