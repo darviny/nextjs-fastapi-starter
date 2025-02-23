@@ -11,8 +11,8 @@ import os
 from typing import Optional, Dict, Any
 
 # Agent IDs
-LEAD_AGENT = "hR7KugGQ4M5SrgTyTrm2"
-CO_AGENT_1 = "iI2D3UHrJmv9kNcFKWMa"
+LEAD_AGENT = os.environ.get("ELEVENLABS_LEAD_AGENT_ID")
+CO_AGENT_1 = os.environ.get("ELEVENLABS_CO_AGENT_1_ID")
 
 class ElevenLabsManager:
     def __init__(self, api_key: str):
@@ -30,13 +30,14 @@ class ElevenLabsManager:
             return False
         return updatePrompt(self.client, agent_id, prompt_text)
         
-    def get_latest_message(self, agent_id: str) -> Optional[str]:
+    def get_transcript(self, agent_id: str) -> Optional[Any]:
         if not self.client:
             return None
-        messages = getMessages(self.client, agent_id)
-        if not messages:
-            return None
-        return messages[-1]
+        conversation = getLatestConversation(self.client, agent_id)
+        if conversation:
+            print(f"Conversation ID: {conversation.conversation_id}")
+            return getTranscript(self.client, conversation.conversation_id, agent_id)
+        return None
 
 def createAgent(client, name, prompt_text="hello"):
 	try:
@@ -72,22 +73,6 @@ def updatePrompt(client, agent_id, prompt_text="hello"):
 		print(f"Error updating prompt: {str(e)}")
 		return False
 
-def getTranscript(client, conversation_id, agent_id):
-	try:
-		# Get conversation history
-		conversation_history = client.conversational_ai.get_conversations(
-			agent_id=agent_id
-		)
-
-		# Get details for the specific conversation
-		conversation_detail = client.conversational_ai.get_conversation(
-			conversation_id=conversation_id
-		)
-		return conversation_detail
-	except Exception as e:
-		print(f"Error getting transcript: {str(e)}")
-		return None
-
 def getLatestConversation(client, agent_id):
 	try:
 		# Get conversation history
@@ -106,19 +91,16 @@ def getLatestConversation(client, agent_id):
 		print(f"Error getting latest conversation: {str(e)}")
 		return None
 
-def getMessages(client, agent_id: str) -> Optional[list[str]]:
-    try:
-        conversation = getLatestConversation(client, agent_id)
-        if not conversation or not conversation.transcript:
-            return None
-            
-        # Return messages with role prefixes
-        messages = [f"{message.role}: {message.message}" for message in conversation.transcript]
-        return messages
-        
-    except Exception as e:
-        print(f"Error getting conversation messages: {str(e)}")
-        return None
+def getTranscript(client, conversation_id, agent_id):
+	try:
+		# Get details for the specific conversation
+		conversation_detail = client.conversational_ai.get_conversation(
+			conversation_id=conversation_id
+		)
+		return conversation_detail
+	except Exception as e:
+		print(f"Error getting transcript: {str(e)}")
+		return None
 
 def getEvals(client, agent_id):
 	try:
@@ -165,7 +147,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
                 detail="OpenAI API key not configured"
             )
         
-        # Initialize ElevenLabs client first to get messages
+        # Initialize ElevenLabs client
         elevenlabs_api_key = os.environ.get("ELEVENLABS_API_KEY")
         if not elevenlabs_api_key:
             raise HTTPException(
@@ -174,7 +156,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
             )
             
         elevenlabs_manager = ElevenLabsManager(elevenlabs_api_key)
-        messages = elevenlabs_manager.get_latest_message(LEAD_AGENT)
+        messages = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         if not messages:
             messages = "write a haiku about ai"  # fallback content
@@ -202,7 +184,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
             )
         
         # Get the latest message after update
-        latest_message = elevenlabs_manager.get_latest_message(LEAD_AGENT)
+        latest_message = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         return {
             "message": "Hello from FastAPI 3",
@@ -213,3 +195,66 @@ async def hello_fast_api3() -> Dict[str, Any]:
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+def test_elevenlabs_functions():
+    # Get API key from environment variable
+    api_key = os.environ.get("ELEVENLABS_API_KEY")
+    if not api_key:
+        print("Error: ELEVENLABS_API_KEY environment variable not set")
+        return
+
+    # Initialize ElevenLabs manager
+    manager = ElevenLabsManager(api_key)
+    if not manager.client:
+        print("Failed to initialize client")
+        return
+
+    # Test with lead agent
+    agent_id = LEAD_AGENT
+    if not agent_id:
+        print("Error: ELEVENLABS_LEAD_AGENT_ID environment variable not set")
+        return
+    
+    # Test getLatestConversation
+    print("\nTesting getLatestConversation:")
+    conversation = getLatestConversation(manager.client, agent_id)
+    if conversation:
+        print(f"Latest conversation ID: {conversation.conversation_id}")
+    else:
+        print("No conversation found")
+
+    # Test getTranscript
+    print("\nTesting getTranscript:")
+    if conversation:  # Using conversation from getLatestConversation
+        transcript = getTranscript(manager.client, conversation.conversation_id, agent_id)
+        if transcript:
+            print("Full transcript:")
+            for message in transcript.transcript:
+                print(f"{message.role}: {message.message}")
+        else:
+            print("No transcript found")
+    else:
+        print("Cannot get transcript without conversation ID")
+        
+    # Test getEvals
+    print("\nTesting getEvals:")
+    evals = getEvals(manager.client, agent_id)
+    if evals:
+        print("Evaluation results from most recent conversation:")
+        for eval in evals:
+            print(eval)
+    else:
+        print("No evaluation results found")
+        
+    # Test getDataCollections
+    print("\nTesting getDataCollections:")
+    data_results = getDataCollections(manager.client, agent_id)
+    if data_results:
+        print("Data collection results from most recent conversation:")
+        for result in data_results:
+            print(result)
+    else:
+        print("No data collection results found")
+
+if __name__ == "__main__":
+    test_elevenlabs_functions()
