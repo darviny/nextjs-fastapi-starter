@@ -92,15 +92,22 @@ def getLatestConversation(client, agent_id):
 		return None
 
 def getTranscript(client, conversation_id, agent_id):
-	try:
-		# Get details for the specific conversation
-		conversation_detail = client.conversational_ai.get_conversation(
-			conversation_id=conversation_id
-		)
-		return conversation_detail
-	except Exception as e:
-		print(f"Error getting transcript: {str(e)}")
-		return None
+    try:
+        # Get details for the specific conversation
+        conversation_detail = client.conversational_ai.get_conversation(
+            conversation_id=conversation_id
+        )
+        if conversation_detail and conversation_detail.transcript:
+            # Join all messages into a single string
+            transcript_text = "\n".join(
+                f"{message.role}: {message.message}" 
+                for message in conversation_detail.transcript
+            )
+            return transcript_text
+        return None
+    except Exception as e:
+        print(f"Error getting transcript: {str(e)}")
+        return None
 
 def getEvals(client, agent_id):
 	try:
@@ -231,8 +238,7 @@ def test_elevenlabs_functions():
         transcript = getTranscript(manager.client, conversation.conversation_id, agent_id)
         if transcript:
             print("Full transcript:")
-            for message in transcript.transcript:
-                print(f"{message.role}: {message.message}")
+            print(transcript)
         else:
             print("No transcript found")
     else:
