@@ -10,6 +10,10 @@ from openai import OpenAI
 import os
 from typing import Optional, Dict, Any
 
+# Agent IDs
+LEAD_AGENT = "hR7KugGQ4M5SrgTyTrm2"
+CO_AGENT_1 = "iI2D3UHrJmv9kNcFKWMa"
+
 class ElevenLabsManager:
     def __init__(self, api_key: str):
         self.client = self.init_client(api_key)
@@ -170,7 +174,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
             )
             
         elevenlabs_manager = ElevenLabsManager(elevenlabs_api_key)
-        messages = elevenlabs_manager.get_latest_message("hR7KugGQ4M5SrgTyTrm2")
+        messages = elevenlabs_manager.get_latest_message(LEAD_AGENT)
         
         if not messages:
             messages = "write a haiku about ai"  # fallback content
@@ -189,7 +193,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         
         # Update the agent's prompt
         if not elevenlabs_manager.update_prompt(
-            agent_id="hR7KugGQ4M5SrgTyTrm2",
+            agent_id=LEAD_AGENT,
             prompt_text=ai_response
         ):
             raise HTTPException(
@@ -198,7 +202,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
             )
         
         # Get the latest message after update
-        latest_message = elevenlabs_manager.get_latest_message("hR7KugGQ4M5SrgTyTrm2")
+        latest_message = elevenlabs_manager.get_latest_message(LEAD_AGENT)
         
         return {
             "message": "Hello from FastAPI 3",
