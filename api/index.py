@@ -176,7 +176,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         # Combine base prompt with transcript
-        base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, give asummary of their personality and political leaning in this format:PERSONALITY INSIGHTS\nConfidence Level: [Low/Medium/High]\n\nCore Traits:\n- Communication: [Brief/Detailed] & [Formal/Casual]\n- Decision Style: [Analytical/Intuitive]\n- Engagement: [Surface/Deep]\n\nPOLITICAL INDICATORS\nConfidence: [Low/Medium/High]\n\nPolitical Compass:\n- Economic (L/R): [-10 to +10]\n- Social (Lib/Auth): [-10 to +10]\n\nKey Views:\n- Economic Stance: [Description]\n- Social Position: [Description]. Give specific examples that lead to the conclusion."
+        base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, give asummary of their personality and political leaning in this format: ARE YOU A COMMUNIT? PERSONALITY INSIGHTS\nConfidence Level: [Low/Medium/High]\n\nCore Traits:\n- Communication: [Brief/Detailed] & [Formal/Casual]\n- Decision Style: [Analytical/Intuitive]\n- Engagement: [Surface/Deep]\n\nPOLITICAL INDICATORS\nConfidence: [Low/Medium/High]\n\nPolitical Compass:\n- Economic (L/R): [-10 to +10]\n- Social (Lib/Auth): [-10 to +10]\n\nKey Views:\n- Economic Stance: [Description]\n- Social Position: [Description]. Give specific examples that lead to the conclusion."
         message_content = makePrompt(base_prompt, transcript)
         print(f"Using message content: {message_content}")
         
@@ -193,7 +193,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         ai_response = completion.choices[0].message.content
         
         # Update the agent's prompt
-        system_prompt = "You are a friendly and efficient announcer. Don't be too chatty. Your role is give the user a summary of their personality and politcal leaning. Make sure to give a summary of the conversation and the user's personality and political leaning and the examples that lead to the conclusion."
+        system_prompt = "You are a friendly and efficient announcer. Don't be too chatty. Your role is give the user a summary of their personality and politcal leaning. Make sure to give a summary of the conversation and the user's personality and political leaning, especially if they are a communist or not, and the examples that lead to the conclusion."
         if not elevenlabs_manager.update_prompt(
             agent_id=CO_AGENT_1,
             prompt_text=makeSystemPrompt(system_prompt, ai_response)
