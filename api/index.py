@@ -210,7 +210,7 @@ async def hello_fast_api() -> Dict[str, Any]:
         print(f"Updating agent with prompt: {formatted_prompt}")
         
         if not elevenlabs_manager.update_prompt(
-            agent_id=CO_AGENT_1,
+            agent_id=ANNOUNCE_AGENT,
             prompt_text=formatted_prompt
         ):
             raise HTTPException(
