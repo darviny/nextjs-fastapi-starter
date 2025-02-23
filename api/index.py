@@ -13,6 +13,7 @@ from typing import Optional, Dict, Any
 # Agent IDs
 LEAD_AGENT = os.environ.get("ELEVENLABS_LEAD_AGENT_ID")
 CO_AGENT_1 = os.environ.get("ELEVENLABS_CO_AGENT_1_ID")
+ANNOUNCE_AGENT = os.environ.get("ELEVENLABS_ANNOUNCE_AGENT_ID")
 
 class ElevenLabsManager:
     def __init__(self, api_key: str):
@@ -150,8 +151,86 @@ def makeSystemPrompt(base_prompt: str, ai_response: Optional[str] = None) -> str
 app = FastAPI()
 
 @app.get("/api/py/helloFastApi")
-async def hello_fast_api() -> Dict[str, str]:
-    return {"message": "Hello from FastAPI"}
+async def hello_fast_api() -> Dict[str, Any]:
+    try:
+        # Initialize OpenAI client
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+        if not openai_api_key:
+            raise HTTPException(
+                status_code=500, 
+                detail="OpenAI API key not configured"
+            )
+        
+        # Initialize ElevenLabs client
+        elevenlabs_api_key = os.environ.get("ELEVENLABS_API_KEY")
+        if not elevenlabs_api_key:
+            raise HTTPException(
+                status_code=500, 
+                detail="ElevenLabs API key not configured"
+            )
+            
+        # Check for agent IDs
+        if not LEAD_AGENT or not CO_AGENT_1 or not ANNOUNCE_AGENT:
+            raise HTTPException(
+                status_code=500,
+                detail="Agent IDs not configured"
+            )
+            
+        elevenlabs_manager = ElevenLabsManager(elevenlabs_api_key)
+        if not elevenlabs_manager.client:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to initialize ElevenLabs client"
+            )
+            
+        transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
+        print(f"Retrieved transcript: {transcript}")
+        
+        # Combine base prompt with transcript
+        base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, give asummary of their personality and political leaning in this format, and their implications: Decide if he is a communist? PERSONALITY INSIGHTS\nConfidence Level: [Low/Medium/High]\n\nCore Traits:\n- Communication: [Brief/Detailed] & [Formal/Casual]\n- Decision Style: [Analytical/Intuitive]\n- Engagement: [Surface/Deep]\n\nPOLITICAL INDICATORS\nConfidence: [Low/Medium/High]\n\nPolitical Compass:\n- Economic (L/R): [-10 to +10]\n- Social (Lib/Auth): [-10 to +10]\n\nKey Views:\n- Economic Stance: [Description]\n- Social Position: [Description]. Give specific examples that lead to the conclusion."
+        message_content = makePrompt(base_prompt, transcript)
+        print(f"Using message content: {message_content}")
+        
+        client = OpenAI(api_key=openai_api_key)
+        
+        # Make OpenAI API call with the message content
+        completion = client.chat.completions.create(
+            model="chatgpt-4o-latest",
+            messages=[
+                {"role": "user", "content": message_content}
+            ]
+        )
+        
+        ai_response = completion.choices[0].message.content
+        print(f"Generated AI response: {ai_response}")
+        
+        # Update the agent's prompt
+        system_prompt = "You are a friendly and dramatic announcer. Don't ask any questions, your role is give the user a summary of their personality and politcal leaning. Make sure to give a summary of the previous conversation and the user's personality and political leaning, especially if they are a communist or not, and the examples that lead to the conclusion. Here are the previous conversation: "
+        formatted_prompt = makeSystemPrompt(system_prompt, ai_response)
+        print(f"Updating agent with prompt: {formatted_prompt}")
+        
+        if not elevenlabs_manager.update_prompt(
+            agent_id=CO_AGENT_1,
+            prompt_text=formatted_prompt
+        ):
+            raise HTTPException(
+                status_code=500, 
+                detail="Failed to update agent prompt"
+            )
+        
+        # Get the latest message after update
+        latest_transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
+        
+        return {
+            "message": "Hello from FastAPI",
+            "ai_response": ai_response,
+            "latest_message": latest_transcript,
+            "status": "ElevenLabs agent updated successfully"
+        }
+        
+    except Exception as e:
+        print(f"Error in hello_fast_api: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/py/helloFastApi3")
 async def hello_fast_api3() -> Dict[str, Any]:
@@ -177,7 +256,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         
         # Combine base prompt with transcript
         #base_prompt = "Based on the previous conversation, analyze the conversation for the user's personaity and politcaling leaning, give asummary of their personality and political leaning in this format, and their implications: Decide if he is a communist? PERSONALITY INSIGHTS\nConfidence Level: [Low/Medium/High]\n\nCore Traits:\n- Communication: [Brief/Detailed] & [Formal/Casual]\n- Decision Style: [Analytical/Intuitive]\n- Engagement: [Surface/Deep]\n\nPOLITICAL INDICATORS\nConfidence: [Low/Medium/High]\n\nPolitical Compass:\n- Economic (L/R): [-10 to +10]\n- Social (Lib/Auth): [-10 to +10]\n\nKey Views:\n- Economic Stance: [Description]\n- Social Position: [Description]. Give specific examples that lead to the conclusion."
-        base_prompt = "Using my previous answers, create ten more extreme version of the questions asked that amplifies my apparent values and beliefs. If my answer shows concern for community welfare, shared resources, and collective responsibility, intensify those themes. If my answer emphasizes individual rights, private property, and personal responsibility, strengthen those aspects. The follow-up questions should feel like a natural progression of my own stated views, just taken to a more radical conclusion."
+        base_prompt = "Using my previous answers, create ten more extreme version of the questions asked that amplifies my apparent values and beliefs. If my answer shows concern for community welfare, shared resources, and collective responsibility, intensify those themes to the point of absurdity. If my answer emphasizes individual rights, private property, and personal responsibility, strengthen those aspects to the point of absurdity. The follow-up questions should feel like a natural progression of my own stated views, just taken to a more radical and absurb change."
         message_content = makePrompt(base_prompt, transcript)
         print(f"Using message content: {message_content}")
         
@@ -185,7 +264,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         
         # Make OpenAI API call with the message content
         completion = client.chat.completions.create(
-            model="gpt-4",
+            model="chatgpt-4o-latest",
             messages=[
                 {"role": "user", "content": message_content}
             ]
