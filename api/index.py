@@ -12,85 +12,137 @@ from typing import Optional, Dict, Any
 
 class ElevenLabsManager:
     def __init__(self, api_key: str):
-        self.client = self._init_client(api_key)
-        
-    def _init_client(self, key: str) -> Optional[ElevenLabs]:
+        self.client = self.init_client(api_key)
+    
+    def init_client(self, api_key: str) -> Optional[ElevenLabs]:
         try:
-            return ElevenLabs(api_key=key)
+            return ElevenLabs(api_key=api_key)
         except Exception as e:
             print(f"Error initializing client: {str(e)}")
             return None
             
-    def create_agent(self, name: str, prompt_text: str = "hello") -> Optional[str]:
-        try:
-            agent = self.client.conversational_ai.create_agent(
-                name=name,
-                conversation_config=self._create_config(prompt_text)
-            )
-            return agent.agent_id
-        except Exception as e:
-            print(f"Error creating agent: {str(e)}")
-            return None
-            
-    def update_prompt(self, agent_id: str, prompt_text: str = "hello") -> bool:
-        try:
-            if not self.client:
-                print("Client not initialized")
-                return False
-            self.client.conversational_ai.update_agent(
-                agent_id=agent_id,
-                conversation_config=self._create_config(prompt_text)
-            )
-            return True
-        except Exception as e:
-            print(f"Error updating prompt: {str(e)}")
+    def update_prompt(self, agent_id: str, prompt_text: str) -> bool:
+        if not self.client:
             return False
-            
-    @staticmethod
-    def _create_config(prompt_text: str) -> ConversationalConfig:
-        return ConversationalConfig(
-            agent=AgentConfig(
-                prompt=PromptAgent(prompt=prompt_text)
-            )
-        )
-
-    def get_latest_conversation(self, agent_id: str):
-        try:
-            if not self.client:
-                print("Client not initialized")
-                return None
-            # Get conversation history
-            conversations = self.client.conversational_ai.get_conversations(
-                agent_id=agent_id
-            )
-            
-            # Get the most recent conversation (first in the list)
-            if hasattr(conversations, 'conversations') and conversations.conversations:
-                latest_conversation = conversations.conversations[0]
-                return self.client.conversational_ai.get_conversation(
-                    conversation_id=latest_conversation.conversation_id
-                )
-            return None
-        except Exception as e:
-            print(f"Error getting latest conversation: {str(e)}")
-            return None
-
+        return updatePrompt(self.client, agent_id, prompt_text)
+        
     def get_latest_message(self, agent_id: str) -> Optional[str]:
-        try:
-            conversation = self.get_latest_conversation(agent_id)
-            if not conversation or not conversation.transcript:
-                return None
-                
-            # Find the most recent user message
-            for message in reversed(conversation.transcript):
-                if message.role != 'agent':
-                    return message.message
-                    
+        if not self.client:
+            return None
+        messages = getMessages(self.client, agent_id)
+        if not messages:
+            return None
+        return messages[-1]
+
+def createAgent(client, name, prompt_text="hello"):
+	try:
+		agent = client.conversational_ai.create_agent(
+			name=name,
+			conversation_config=ConversationalConfig(
+				agent=AgentConfig(
+					prompt=PromptAgent(
+						prompt=prompt_text
+					)
+				)
+			)
+		)
+		return agent.agent_id
+	except Exception as e:
+		print(f"Error creating agent: {str(e)}")
+		return None
+
+def updatePrompt(client, agent_id, prompt_text="hello"):
+	try:
+		client.conversational_ai.update_agent(
+			agent_id=agent_id,
+			conversation_config=ConversationalConfig(
+				agent=AgentConfig(
+					prompt=PromptAgent(
+						prompt=prompt_text
+					)
+				)
+			)
+		)
+		return True
+	except Exception as e:
+		print(f"Error updating prompt: {str(e)}")
+		return False
+
+def getTranscript(client, conversation_id, agent_id):
+	try:
+		# Get conversation history
+		conversation_history = client.conversational_ai.get_conversations(
+			agent_id=agent_id
+		)
+
+		# Get details for the specific conversation
+		conversation_detail = client.conversational_ai.get_conversation(
+			conversation_id=conversation_id
+		)
+		return conversation_detail
+	except Exception as e:
+		print(f"Error getting transcript: {str(e)}")
+		return None
+
+def getLatestConversation(client, agent_id):
+	try:
+		# Get conversation history
+		conversations = client.conversational_ai.get_conversations(
+			agent_id=agent_id
+		)
+		
+		# Get the most recent conversation (first in the list)
+		if hasattr(conversations, 'conversations') and conversations.conversations:
+			latest_conversation = conversations.conversations[0]
+			return client.conversational_ai.get_conversation(
+				conversation_id=latest_conversation.conversation_id
+			)
+		return None
+	except Exception as e:
+		print(f"Error getting latest conversation: {str(e)}")
+		return None
+
+def getMessages(client, agent_id: str) -> Optional[list[str]]:
+    try:
+        conversation = getLatestConversation(client, agent_id)
+        if not conversation or not conversation.transcript:
             return None
             
-        except Exception as e:
-            print(f"Error getting recent message: {str(e)}")
-            return None
+        # Return messages with role prefixes
+        messages = [f"{message.role}: {message.message}" for message in conversation.transcript]
+        return messages
+        
+    except Exception as e:
+        print(f"Error getting conversation messages: {str(e)}")
+        return None
+
+def getEvals(client, agent_id):
+	try:
+		conversation = getLatestConversation(client, agent_id)
+		if not conversation or not conversation.analysis or not conversation.analysis.evaluation_criteria_results:
+			return None
+			
+		# Return just the evaluation criteria IDs in a list
+		evals = list(conversation.analysis.evaluation_criteria_results.keys())
+		return evals
+		
+	except Exception as e:
+		print(f"Error getting conversation evaluations: {str(e)}")
+		return None
+
+def getDataCollections(client, agent_id):
+	try:
+		conversation = getLatestConversation(client, agent_id)
+		if not conversation or not conversation.analysis or not conversation.analysis.data_collection_results:
+			return None
+			
+		# Return just the data collection IDs in a list
+		results = list(conversation.analysis.data_collection_results.keys())
+		return results
+		
+	except Exception as e:
+		print(f"Error getting data collection results: {str(e)}")
+		return None
 
 app = FastAPI()
 
@@ -113,7 +165,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         
         # Make OpenAI API call
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4",
             messages=[
                 {"role": "user", "content": "write a haiku about ai"}
             ]
