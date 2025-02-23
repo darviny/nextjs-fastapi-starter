@@ -156,18 +156,20 @@ async def hello_fast_api3() -> Dict[str, Any]:
             )
             
         elevenlabs_manager = ElevenLabsManager(elevenlabs_api_key)
-        messages = elevenlabs_manager.get_transcript(LEAD_AGENT)
+        transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
-        if not messages:
-            messages = "write a haiku about ai"  # fallback content
+        # Extract the last message from transcript or use fallback
+        message_content = "write a haiku about ai"  # fallback content
+        if transcript and transcript.transcript:
+            message_content = transcript.transcript[-1].message
         
         client = OpenAI(api_key=openai_api_key)
         
-        # Make OpenAI API call with the messages
+        # Make OpenAI API call with the message content
         completion = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "user", "content": messages}
+                {"role": "user", "content": message_content}
             ]
         )
         
@@ -184,12 +186,12 @@ async def hello_fast_api3() -> Dict[str, Any]:
             )
         
         # Get the latest message after update
-        latest_message = elevenlabs_manager.get_transcript(LEAD_AGENT)
+        latest_transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         return {
             "message": "Hello from FastAPI 3",
             "ai_response": ai_response,
-            "latest_message": latest_message,
+            "latest_message": latest_transcript,
             "status": "ElevenLabs agent updated successfully"
         }
         
