@@ -176,7 +176,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         # Combine base prompt with transcript
-        base_prompt = "Based on the previous conversation, analyze the conversation and generate five interesting follow up questions."
+        base_prompt = "Based on the previous conversation, analyze the conversation and generate three interesting follow up questions. At the beginning of each question, explain what they mentioned previously and why you are asking them this questions."
         message_content = makePrompt(base_prompt, transcript)
         print(f"Using message content: {message_content}")
         
