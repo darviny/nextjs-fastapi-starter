@@ -165,10 +165,9 @@ async def hello_fast_api3() -> Dict[str, Any]:
         elevenlabs_manager = ElevenLabsManager(elevenlabs_api_key)
         transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
-        # Extract the last message from transcript or use fallback
-        message_content = "write a haiku about ai"  # fallback content
-        if transcript and transcript.transcript:
-            message_content = transcript.transcript[-1].message
+        # Use transcript or fallback
+        message_content = transcript if transcript else "write a haiku about ai"
+        print(f"Using message content: {message_content}")
         
         client = OpenAI(api_key=openai_api_key)
         
@@ -203,6 +202,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         }
         
     except Exception as e:
+        print(f"Error in hello_fast_api3: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     
 def test_elevenlabs_functions():
