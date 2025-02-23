@@ -193,7 +193,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         ai_response = completion.choices[0].message.content
         
         # Update the agent's prompt
-        system_prompt = "You are a friendly and efficient interviewer. Don't be too chatty. Your role is to be asking these questions. Make sure you explain why you are asking them."
+        system_prompt = "You are a friendly and efficient interviewer. Don't be too chatty. Your role is to be asking a random question out of the following questions. Make sure you explain why you are asking it."
         if not elevenlabs_manager.update_prompt(
             agent_id=CO_AGENT_1,
             prompt_text=makeSystemPrompt(system_prompt, ai_response)
