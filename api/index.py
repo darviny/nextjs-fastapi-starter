@@ -140,7 +140,12 @@ def getDataCollections(client, agent_id):
 def makePrompt(base_prompt: str, transcript: Optional[str] = None) -> str:
     if not transcript:
         return base_prompt
-    return f"Previous conversation:\n{transcript}\n\n{base_prompt}"
+    return f"{base_prompt}\n\nPrevious conversation:\n{transcript}"
+
+def makeSystemPrompt(base_prompt: str, ai_response: Optional[str] = None) -> str:
+    if not ai_response:
+        return base_prompt
+    return f"{base_prompt}\n\n{ai_response}"
 
 app = FastAPI()
 
@@ -171,7 +176,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         transcript = elevenlabs_manager.get_transcript(LEAD_AGENT)
         
         # Combine base prompt with transcript
-        base_prompt = "write a haiku about the previous conversation"
+        base_prompt = "Based on the previous conversation, analyze the conversation and generate five interesting follow up questions."
         message_content = makePrompt(base_prompt, transcript)
         print(f"Using message content: {message_content}")
         
@@ -188,9 +193,10 @@ async def hello_fast_api3() -> Dict[str, Any]:
         ai_response = completion.choices[0].message.content
         
         # Update the agent's prompt
+        system_prompt = "You are a friendly and efficient interviewer. Your role is to be asking these questions."
         if not elevenlabs_manager.update_prompt(
             agent_id=CO_AGENT_1,
-            prompt_text=ai_response
+            prompt_text=makeSystemPrompt(system_prompt, ai_response)
         ):
             raise HTTPException(
                 status_code=500, 
