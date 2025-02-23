@@ -161,19 +161,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
                 detail="OpenAI API key not configured"
             )
         
-        client = OpenAI(api_key=openai_api_key)
-        
-        # Make OpenAI API call
-        completion = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "user", "content": "write a haiku about ai"}
-            ]
-        )
-        
-        ai_response = completion.choices[0].message.content
-        
-        # Initialize ElevenLabs client
+        # Initialize ElevenLabs client first to get messages
         elevenlabs_api_key = os.environ.get("ELEVENLABS_API_KEY")
         if not elevenlabs_api_key:
             raise HTTPException(
@@ -182,8 +170,24 @@ async def hello_fast_api3() -> Dict[str, Any]:
             )
             
         elevenlabs_manager = ElevenLabsManager(elevenlabs_api_key)
+        messages = elevenlabs_manager.get_latest_message("hR7KugGQ4M5SrgTyTrm2")
         
-        # Update the hardcoded agent's prompt
+        if not messages:
+            messages = "write a haiku about ai"  # fallback content
+        
+        client = OpenAI(api_key=openai_api_key)
+        
+        # Make OpenAI API call with the messages
+        completion = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "user", "content": messages}
+            ]
+        )
+        
+        ai_response = completion.choices[0].message.content
+        
+        # Update the agent's prompt
         if not elevenlabs_manager.update_prompt(
             agent_id="hR7KugGQ4M5SrgTyTrm2",
             prompt_text=ai_response
@@ -193,7 +197,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
                 detail="Failed to update agent prompt"
             )
         
-        # Get the latest message
+        # Get the latest message after update
         latest_message = elevenlabs_manager.get_latest_message("hR7KugGQ4M5SrgTyTrm2")
         
         return {
