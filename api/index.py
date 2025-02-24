@@ -205,7 +205,7 @@ async def hello_fast_api() -> Dict[str, Any]:
         print(f"Generated AI response: {ai_response}")
         
         # Update the agent's prompt
-        system_prompt = "You are a friendly and dramatic announcer. Don't ask any questions, your role is give the user a summary of their personality and politcal leaning. Make sure to give a summary of the previous conversation and the user's personality and political leaning, especially if they are a communist or not, and the examples that lead to the conclusion. Here are the previous conversation: "
+        system_prompt = "You are a friendly and dramatic announcer. Don't ask any questions, your role is give the user a summary of their personality and politcal leaning. Make sure to give a summary of the previous conversation and the user's personality and political leaning, especially if they are a communist or not, and the examples that lead to the conclusion. At the end, tell the user to click the continue button if he wants answer more questions and get more accurate and refined results. Here are the previous conversation: "
         formatted_prompt = makeSystemPrompt(system_prompt, ai_response)
         print(f"Updating agent with prompt: {formatted_prompt}")
         
@@ -274,7 +274,7 @@ async def hello_fast_api3() -> Dict[str, Any]:
         
         # Update the agent's prompt
         #system_prompt = "You are a friendly and efficient announcer. Don't be too chatty. Your role is give the user a summary of their personality and politcal leaning. Make sure to give a summary of the conversation and the user's personality and political leaning, especially if they are a communist or not, and the examples that lead to the conclusion."
-        system_prompt = "You are a friendly and efficient interviewer. Your role is to be asking all the questions out of the following questions. Ask them the questions straight away, one question at a time, don't hesitate."
+        system_prompt = "You are a friendly and efficient interviewer. Your role is to be asking all the questions out of the following questions. Ask them the questions straight away, one question at a time, don't hesitate. At the end of the conversation, tell the user to click the continue button if he wants to answer more questions and get more accurate and refined results. Or he can get a summary of his political leanings by clicking the result button."
         if not elevenlabs_manager.update_prompt(
             agent_id=CO_AGENT_1,
             prompt_text=makeSystemPrompt(system_prompt, ai_response)
